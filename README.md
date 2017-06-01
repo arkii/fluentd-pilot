@@ -1,9 +1,11 @@
-fluentd-pilot
+fluentd-pilot-forwarder
 =============
 
-[![CircleCI](https://circleci.com/gh/AliyunContainerService/fluentd-pilot.svg?style=svg)](https://circleci.com/gh/AliyunContainerService/fluentd-pilot)
+[`fluentd-pilot`](https://github.com/AliyunContainerService/fluentd-pilot/blob/master/README.md)is an awesome docker log tool. With [fluentd-pilot](https://github.com/AliyunContainerService/fluentd-pilot/blob/master/README.md) you can collect logs from docker hosts and send them to your centralize log system such as elasticsearch, graylog2, awsog and etc. [fluentd-pilot](https://github.com/AliyunContainerService/fluentd-pilot/blob/master/README.md)  can collect not only docker stdout but also log file that inside docker containers.
 
-`fluentd-pilot` is an awesome docker log tool. With `fluentd-pilot` you can collect logs from docker hosts and send them to your centralize log system such as elasticsearch, graylog2, awsog and etc. `fluentd-pilot` can collect not only docker stdout but also log file that inside docker containers.
+Before start, read this.
+[fluentd-docker-logging](http://docs.fluentd.org/v0.12/articles/docker-logging)
+
 
 Try it
 ======
@@ -12,73 +14,67 @@ Prerequisites:
 
 - docker-compose >= 1.6
 - Docker Engine >= 1.10
+- [Fluentd](http://fluentd.org/)>= 0.12 
 
-```
-git clone git@github.com:AliyunContainerService/fluentd-pilot.git
-cd fluentd-pilot/quickstart
-./run
-```
-
-Then access kibana under the tips. You will find that tomcat's has been collected and sended to kibana.
-
-Create index:
-![kibana](quickstart/Kibana.png)
-
-Query the logs:
-![kibana](quickstart/Kibana2.png)
-
-Quickstart
-==========
-
-### Run pilot
-
-```
-docker run --rm -it \
-    -v /var/run/docker.sock:/var/run/docker.sock \
-    -v /:/host \
-    registry.cn-hangzhou.aliyuncs.com/acs-sample/fluentd-pilot:latest
+``` yaml
+version: '3'
+services:
+  pilot:
+    image: 'arkii/fluentd-pilot:latest'
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /:/host
+    environment:
+      FLUENTD_HOST: '10.30.57.145'
+      FLUENTD_OUTPUT: fluentd_forward
+    deploy:
+      mode: global
+    restart:  always
 ```
 
-### Run applications whose logs need to be collected
 
-Open a new terminal, run the application. With tomcat for example:
-
-```
-docker run -it --rm  -p 10080:8080 \
-    -v /usr/local/tomcat/logs \
-    --label aliyun.logs.catalina=stdout \
-    --label aliyun.logs.access=/usr/local/tomcat/logs/localhost_access_log.*.txt \
-    tomcat
-```
-
-Now watch the output of fluentd-pilot. You will find that fluentd-pilot get all tomcat's startup logs. If you access tomcat with your broswer, access logs in `/usr/local/tomcat/logs/localhost_access_log.\*.txt` will also be displayed in fluentd-pilot's output.
-
-More Info: [Documents](docs/docs.md)
-
-Feature
+Install Fluentd-aggragator
 ========
 
-- Single fluentd process per docker host. You don't need to create new fluentd process for every docker container.
-- Support both stdout and file. Either Docker log driver or logspout can only collect stdout.
-- Declarative configuration. You need do nothing but declare the logs you want to collect.
-- Support many log management: elastichsearch, graylog2, awslogs and more.
-- Tags. You could add tags on the logs collected, and later filter by tags in log management.
+[install-by-rpm](http://docs.fluentd.org/v0.12/articles/install-by-rpm)
 
-Build fluentd-pilot
-===================
-
-Prerequisites:
-
-- Go >= 1.6
 
 ```
-go get github.com/AliyunContainerService/fluentd-pilot
-cd $GOPATH/github.com/AliyunContainerService/fluentd-pilot/docker-images
-./build.sh # This will create a new docker image named pilot:latest
+fluent-gem install fluent-plugin-file-alternative
+fluent-gem install fluent-plugin-forest
+fluent-gem install fluent-plugin-record-reformer
 ```
 
-Contribute
-==========
+``` 
+# cat /data/fluentd/etc/fluent.conf
+<source>
+  @type  forward
+  bind 0.0.0.0
+  port  24224
+</source>
 
-You are welcome to make new issues and pull reuqests.
+<filter **>
+  @type stdout
+</filter>
 
+<match docker.**>
+  type record_reformer
+  remove_keys host,@target,docker_app,stream,@timestamp
+  renew_record false
+  enable_ruby false
+  tag reformed.${tag_parts[0]}.${record["docker_app"]}.${tag_parts[2]}
+</match>
+
+<match reformed.docker.**>
+  type forest
+  subtype file
+  <template>
+    type file_alternative
+    output_time false
+    output_tag false
+    add_newline false
+    path /srv/log/${tag_parts[2]}/${tag_parts[3]}-*.log
+    time_slice_format %m-%d
+  </template>
+</match>
+```

@@ -1,9 +1,13 @@
 FROM alpine:3.5
 
-RUN apk update && apk upgrade && \  
+RUN echo 'http://mirrors.aliyun.com/alpine/v3.5/main' >/etc/apk/repositories && \
+  echo 'http://mirrors.aliyun.com/alpine/v3.5/community' >>/etc/apk/repositories && \
+  apk update && apk upgrade && \  
   apk add ruby-json ruby-irb && \
   apk add build-base ruby-dev && \
   apk add ca-certificates wget && \
+  gem source --remove https://rubygems.org/ && \
+  gem source -a http://mirrors.aliyun.com/rubygems/ && \
   gem install fluentd -v "~> 0.12.0" --no-ri --no-rdoc && \
   gem install fluent-plugin-elasticsearch --no-ri --no-rdoc && \
   gem install gelf -v "~> 3.0.0" --no-ri --no-rdoc && \

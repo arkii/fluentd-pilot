@@ -48,36 +48,25 @@ cat >> $FLUENTD_CONFIG << EOF
 EOF
 }
 
-file(){
-assert_not_empty "$FILE_PATH" "FILE_PATH required"
+fluentd_forward(){
+echo "use fluentd_forwarder"
+assert_not_empty "$FLUENTD_HOST" "FLUENTD_HOST required"
 cat >> $FLUENTD_CONFIG << EOF
 <match docker.**>
-@type file
-path $FILE_PATH
+@type forward
+send_timeout 60s
+recover_wait 10s
+heartbeat_interval 1s
+phi_threshold 16
+hard_timeout 60s
+<server>
+name fluentd
+host $FLUENTD_HOST
+port ${FLUENTD_PORT:-24224}
+</server>
 </match>
 EOF
 }
-
-kafka(){
-#assert_not_empty "$ZOOKEEPER_HOST" "ZOOKEEPER_HOST required"
-#assert_not_empty "$ZOOKEEPER_PORT" "ZOOKEEPER_PORT required"
-assert_not_empty "$BROKERS" "BROKERS required"
-cat >> $FLUENTD_CONFIG << EOF
-<match docker.**>
-@type               kafka
-brokers             $BROKERS
-default_topic       test
-topic_key           target
-flush_interval      3s
-buffer_type         file
-ack_timeout         2000
-output_data_type    json
-compression_codec   gzip
-</match>
-EOF
-}
-
-
 
 graylog(){
 assert_not_empty "$GRAYLOG_HOST" "GRAYLOG_HOST required"
@@ -131,10 +120,9 @@ case "$FLUENTD_OUTPUT" in
         graylog;;
     aliyun_sls)
         aliyun_sls;;
-    file)
-        file;;
-    kafka)
-        kafka;;
+    fluentd_forward)
+        fluentd_forward;;
     *)
         default
 esac
+
