@@ -15,10 +15,8 @@ services:
       aliyun.routing.port_5601: kibana
     links:
       - elasticsearch
-
   pilot:
-    image: pilot:latest
-    privileged: true
+    image: registry.cn-hangzhou.aliyuncs.com/acs-sample/fluentd-pilot:latest
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - /:/host

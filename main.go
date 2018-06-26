@@ -3,7 +3,7 @@ package main
 import (
 	"flag"
 	log "github.com/Sirupsen/logrus"
-	"github.com/AliyunContainerService/log-pilot/pilot"
+	"github.com/AliyunContainerService/fluentd-pilot/pilot"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -11,7 +11,7 @@ import (
 
 func main() {
 
-	template := flag.String("template", "", "Template filepath for fluentd or filebeat.")
+	template := flag.String("template", "", "Template filepath for fluentd.")
 	base := flag.String("base", "", "Directory which mount host root.")
 	level := flag.String("log-level", "INFO", "Log level")
 	flag.Parse()
