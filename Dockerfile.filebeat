@@ -12,6 +12,7 @@ RUN go install
 FROM alpine:3.6
 
 ENV FILEBEAT_VERSION=6.1.1-2
+# ENV FILEBEAT_VERSION=6.3.0
 COPY assets/glibc/glibc-2.26-r0.apk /tmp/
 RUN apk update && \ 
     apk add python && \
@@ -19,6 +20,7 @@ RUN apk update && \
     apk add wget && \
     update-ca-certificates && \
     wget http://acs-logging.oss-cn-hangzhou.aliyuncs.com/beats/filebeat/filebeat-${FILEBEAT_VERSION}-linux-x86_64.tar.gz -P /tmp/ && \
+    # wget https://artifacts.elastic.co/downloads/beats/filebeat/filebeat-${FILEBEAT_VERSION}-linux-x86_64.tar.gz -P /tmp/ && \
     mkdir -p /etc/filebeat /var/lib/filebeat /var/log/filebeat && \
     tar zxf /tmp/filebeat-${FILEBEAT_VERSION}-linux-x86_64.tar.gz -C /tmp/ && \
     cp -rf /tmp/filebeat-${FILEBEAT_VERSION}-linux-x86_64/filebeat /usr/bin/ && \

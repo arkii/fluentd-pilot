@@ -149,6 +149,26 @@ output.kafka:
 EOF
 }
 
+ddtrace() {
+assert_not_empty "$KAFKA_BROKERS" "KAFKA_BROKERS required"
+KAFKA_BROKERS=$(echo $KAFKA_BROKERS|awk -F, '{for(i=1;i<=NF;i++){printf "\"%s\",", $i}}')
+KAFKA_BROKERS=${KAFKA_BROKERS%,}
+
+cat >> $FILEBEAT_CONFIG << EOF
+$(base)
+output.kafka:
+    hosts: [$KAFKA_BROKERS]
+    topic: 'ddtrace'
+    partition.round_robin:
+      reachable_only: false
+    required_acks: 1
+    compression: gzip
+    max_message_bytes: 1000000
+    codec.format:
+      string: '%{[message]}'
+EOF
+}
+
 count(){
 cat >> $FILEBEAT_CONFIG << EOF
 $(base)
@@ -167,6 +187,8 @@ case "$FILEBEAT_OUTPUT" in
         redis;;
     kafka)
         kafka;;
+    ddtrace)
+        ddtrace;;
     count)
         count;;
     *)

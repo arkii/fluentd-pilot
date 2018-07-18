@@ -12,8 +12,10 @@ spec:
     env:
     - name: aliyun_logs_catalina
       value: "stdout"
+      # - name: aliyun_logs_access
+      # value: "/usr/local/tomcat/logs/catalina.*.log"
     - name: aliyun_logs_access
-      value: "/usr/local/tomcat/logs/catalina.*.log"
+      value: "/usr/local/tomcat/logs/*.*"
     volumeMounts:
       - name: tomcat-log
         mountPath: /usr/local/tomcat/logs
