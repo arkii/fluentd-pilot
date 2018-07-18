@@ -158,7 +158,7 @@ cat >> $FILEBEAT_CONFIG << EOF
 $(base)
 output.kafka:
     hosts: [$KAFKA_BROKERS]
-    topic: 'ddtrace'
+    topic: "${KAFKA_TOPIC}"
     partition.round_robin:
       reachable_only: false
     required_acks: 1
