@@ -14,7 +14,9 @@ FROM alpine:3.6
 ENV FILEBEAT_VERSION=6.1.1-2
 # ENV FILEBEAT_VERSION=6.3.0
 COPY assets/glibc/glibc-2.26-r0.apk /tmp/
-RUN apk update && \ 
+RUN echo 'http://mirrors.aliyun.com/alpine/v3.6/main' >/etc/apk/repositories && \
+    echo 'http://mirrors.aliyun.com/alpine/v3.6/community' >>/etc/apk/repositories && \
+    apk update && \ 
     apk add python && \
     apk add ca-certificates && \
     apk add wget && \
